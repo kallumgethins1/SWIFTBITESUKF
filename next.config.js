@@ -1,9 +1,12 @@
 
-
+/** @type {import('next').NextConfig} */
 module.exports = {
-    reactStrictMode: true,
-    images: {
-        domains: ['stackfood.6am.one'],
-       // staticPageGenerationTimeout: 1500//Domain of image host
-    },
+  reactStrictMode: true,
+
+  // 🔥 THIS FIXES THE BUILD TIMEOUT
+  staticPageGenerationTimeout: 300, // seconds (5 minutes)
+
+  images: {
+    domains: ['stackfood.6am.one'],
+  },
 }
