@@ -7,6 +7,7 @@ import { useDispatch } from 'react-redux'
 import { useRouter } from "next/router"
 import { CustomHeader } from "@/api/Headers"
 import { checkMaintenanceMode } from "@/utils/customFunctions"
+import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 
 const Home = ({ configData, landingPageData }) => {
   const router = useRouter()
@@ -56,8 +57,20 @@ const Home = ({ configData, landingPageData }) => {
 
 export default Home
 
-// ✅ SERVER-SIDE RENDERING ONLY (NO BUILD-TIME FETCHING)
-export const getServerSideProps = async ({ req }) => {
+// 🚨 THIS IS THE CRITICAL FIX
+export const getServerSideProps = async (context) => {
+
+  // 🔒 Skip ALL API calls during build
+  if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
+    return {
+      props: {
+        configData: null,
+        landingPageData: null,
+      },
+    }
+  }
+
+  const { req } = context
   const language = req.cookies?.languageSetting || 'en'
 
   let configData = null
@@ -67,7 +80,6 @@ export const getServerSideProps = async ({ req }) => {
     const configRes = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/config`,
       {
-        method: 'GET',
         headers: {
           'X-software-id': 33571750,
           'X-server': 'server',
@@ -84,16 +96,15 @@ export const getServerSideProps = async ({ req }) => {
   }
 
   try {
-    const landingPageRes = await fetch(
+    const landingRes = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/landing-page`,
       {
-        method: 'GET',
         headers: CustomHeader,
       }
     )
 
-    if (landingPageRes.ok) {
-      landingPageData = await landingPageRes.json()
+    if (landingRes.ok) {
+      landingPageData = await landingRes.json()
     }
   } catch (error) {
     console.error('Landing page fetch failed:', error)
